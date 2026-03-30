@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>NodeKin | Manual DLS Explorer</title>
+    <style>
+        :root { --primary: #4a90e2; --accent: #f1c40f; --success: #2ecc71; --danger: #e74c3c; --text: #2c3e50; }
+        body { font-family: 'Segoe UI', sans-serif; background: #eef2f7; padding: 20px; color: var(--text); margin: 0; }
+        .container { max-width: 1000px; margin: auto; background: white; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); overflow: hidden; }
+        .header { background: var(--primary); color: white; padding: 20px; text-align: center; }
+        .tabs { display: flex; background: #f1f1f1; border-bottom: 1px solid #ddd; }
+        .tab { flex: 1; padding: 15px; text-align: center; font-weight: bold; cursor: pointer; }
+        .tab.active { background: white; border-bottom: 3px solid var(--primary); color: var(--primary); }
+        .input-box { padding: 25px; display: none; }
+        .input-box.active { display: block; }
+        .common-panel { background: #f9f9f9; padding: 20px 25px; border-top: 1px solid #eee; border-bottom: 4px solid var(--primary); }
+        .row { display: flex; gap: 15px; align-items: flex-end; margin-bottom: 10px; }
+        input, textarea { padding: 12px; border: 1px solid #ccc; border-radius: 6px; width: 100%; box-sizing: border-box; }
+        textarea { height: 110px; font-family: 'Courier New', monospace; font-size: 13px; resize: none; }
+        .btn-group { display: flex; gap: 10px; flex: 3; }
+        button { padding: 12px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-gen { background: var(--primary); color: white; flex: 1.5; }
+        .btn-find { background: var(--accent); color: #333; flex: 1.5; }
+        .btn-clear { background: var(--danger); color: white; flex: 1; }
+        #status { font-weight: bold; margin-top: 12px; min-height: 20px; font-size: 15px; }
+        #canvas-wrap { background: white; padding: 20px; overflow: auto; text-align: center; }
+        canvas { border: 1px solid #eee; border-radius: 8px; background: #fff; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h2 style="margin:0">NodeGen Explorer - DLS</h2>
+    </div>
+
+    <div class="tabs">
+        <div id="tab1" class="tab active" onclick="setTab(1)">Manual Entry</div>
+        <div id="tab2" class="tab" onclick="setTab(2)">Description Data</div>
+    </div>
+
+    <div id="box1" class="input-box active">
+        <div class="row">
+            <div style="flex:2"><label>Parent Name</label><input type="text" id="mParent" placeholder="e.g. Amitabh"></div>
+            <div style="flex:2"><label id="childLabel">Child Name</label><input type="text" id="mChild" placeholder="e.g. Abhishek"></div>
+            <div style="flex:1; text-align:center"><label>Is Root?</label><br><input type="checkbox" id="mRoot" onchange="toggleChild()" style="width:22px; height:22px; cursor:pointer"></div>
+            <button onclick="addManual()" style="background:var(--success); color:white; flex: 1;">+ Add</button>
+        </div>
+    </div>
+
+    <div id="box2" class="input-box">
+        <label>Relationship List (Parent | Child)</label>
+        <textarea id="bulkData">Amitabh | Null
+Dharmendra | Null
+Amitabh | Abhishek
+Dharmendra | Sunny
+Abhishek | Aaradhya
+Sunny | Bobby</textarea>
+    </div>
+
+    <div class="common-panel">
+        <div class="row">
+            <div style="flex:1"><label>Search Depth (L)</label><input type="number" id="depthLimit" value="3" min="0" oninput="clearSearchAndDraw()"></div>
+            <div style="flex:2"><label>DLS Finding</label><input type="text" id="targetName" placeholder="Enter target name..." oninput="clearSearchAndDraw()"></div>
+            <div class="btn-group">
+                <button class="btn-gen" onclick="draw()">Generate Tree</button>
+                <button class="btn-find" onclick="runDLS()">DLS Find</button>
+                <button class="btn-clear" onclick="resetAll()">Clear All</button>
+            </div>
+        </div>
+        <div id="status">Status: Ready.</div>
+    </div>
+
+    <div id="canvas-wrap">
+        <canvas id="treeCanvas" width="940" height="520"></canvas>
+    </div>
+</div>
+
+<script>
+let searchPath = [];
+
+function setTab(n) {
+    document.querySelectorAll('.tab, .input-box').forEach(el => el.classList.remove('active'));
+    document.getElementById('tab'+n).classList.add('active');
+    document.getElementById('box'+n).classList.add('active');
+}
+
+function toggleChild() {
+    const isR = document.getElementById('mRoot').checked;
+    const cInput = document.getElementById('mChild');
+    cInput.disabled = isR;
+    cInput.style.background = isR ? "#f0f0f0" : "#fff";
+    document.getElementById('childLabel').style.opacity = isR ? "0.5" : "1";
+}
+
+function addManual() {
+    const p = document.getElementById('mParent').value.trim();
+    const isR = document.getElementById('mRoot').checked;
+    const c = isR ? "Null" : document.getElementById('mChild').value.trim();
+    if(!p) return;
+    const area = document.getElementById('bulkData');
+    area.value += (area.value ? "\n" : "") + `${p} | ${c}`;
+    document.getElementById('mParent').value = "";
+    document.getElementById('mChild').value = "";
+    document.getElementById('mRoot').checked = false;
+    toggleChild();
+    clearSearchAndDraw();
+}
+
+// Logic to clear existing highlights when inputs change, but don't search yet
+function clearSearchAndDraw() {
+    searchPath = [];
+    document.getElementById('status').innerText = "Inputs changed. Click 'DLS Find' to search.";
+    document.getElementById('status').style.color = "#4a90e2";
+    draw();
+}
+
+function resetAll() {
+    if(confirm("Clear everything?")) {
+        document.getElementById('bulkData').value = "";
+        document.getElementById('targetName').value = "";
+        document.getElementById('status').innerText = "System reset.";
+        document.getElementById('status').style.color = "#4a90e2";
+        searchPath = [];
+        draw();
+    }
+}
+
+function dls(node, target, depth, limit) {
+    if (!node) return null;
+    if (node.name.toLowerCase() === target.toLowerCase()) return [node.name];
+    if (depth >= limit) return null;
+    for (let child of node.children) {
+        let path = dls(child, target, depth + 1, limit);
+        if (path) return [node.name, ...path];
+    }
+    return null;
+}
+
+function runDLS() {
+    const target = document.getElementById('targetName').value.trim();
+    const limit = parseInt(document.getElementById('depthLimit').value);
+    const s = document.getElementById('status');
+    if (!target) {
+        s.innerText = "Please enter a target name.";
+        s.style.color = "var(--danger)";
+        return;
+    }
+    
+    const baseNode = buildHierarchy();
+    searchPath = [];
+    
+    let result = dls(baseNode, target, 0, limit);
+    if (result) {
+        searchPath = result;
+        s.innerText = "✔ Found: " + searchPath.join(" → ");
+        s.style.color = "#2ecc71";
+    } else {
+        s.innerText = "✘ Not found within depth limit " + limit;
+        s.style.color = "#e74c3c";
+        searchPath = [];
+    }
+    draw(); 
+}
+
+function buildHierarchy() {
+    const rawLines = document.getElementById('bulkData').value.split('\n');
+    const nodes = {};
+    const baseNode = { name: "Human Society", children: [] };
+    nodes["Human Society"] = baseNode;
+
+    rawLines.forEach(line => {
+        if (!line.includes('|')) return;
+        const [p, c] = line.split('|').map(s => s.trim());
+        if (!p) return;
+        if (!nodes[p]) nodes[p] = { name: p, children: [] };
+        if (!c || c.toLowerCase() === 'null') {
+            if (!baseNode.children.find(child => child.name === p)) {
+                baseNode.children.push(nodes[p]);
+            }
+        } else {
+            if (!nodes[c]) nodes[c] = { name: c, children: [] };
+            if (!nodes[p].children.find(child => child.name === c)) {
+                nodes[p].children.push(nodes[c]);
+            }
+        }
+    });
+    return baseNode;
+}
+
+function draw() {
+    const canvas = document.getElementById('treeCanvas');
+    const ctx = canvas.getContext('2d');
+    const baseNode = buildHierarchy();
+    ctx.clearRect(0,0,canvas.width, canvas.height);
+    renderNode(ctx, baseNode, canvas.width/2, 60, 0, 350);
+}
+
+function renderNode(ctx, node, x, y, level, gap) {
+    if (!node) return;
+    const limitVal = parseInt(document.getElementById('depthLimit').value);
+    const isSelected = searchPath.includes(node.name);
+
+    if (node.children.length > 0) {
+        let cx = x - (node.children.length - 1) * gap / 2;
+        node.children.forEach(c => {
+            const childSelected = isSelected && searchPath.includes(c.name);
+            ctx.beginPath();
+            ctx.moveTo(x, y + 20);
+            ctx.lineTo(cx, y + 80);
+            ctx.strokeStyle = childSelected ? "#f1c40f" : "#ddd";
+            ctx.lineWidth = childSelected ? 5 : 2;
+            ctx.stroke();
+            renderNode(ctx, c, cx, y + 100, level + 1, gap / 2.5);
+            cx += gap;
+        });
+    }
+    
+    ctx.beginPath();
+    ctx.arc(x, y, 32, 0, Math.PI*2);
+    ctx.fillStyle = isSelected ? "#fff9c4" : "white";
+    ctx.fill();
+    ctx.strokeStyle = isSelected ? "#f1c40f" : (level === limitVal ? "#e74c3c" : "#4a90e2");
+    ctx.lineWidth = isSelected ? 5 : 2;
+    ctx.stroke();
+    ctx.fillStyle = "#2c3e50"; 
+    ctx.font = isSelected ? "bold 11px sans-serif" : "10px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(node.name, x, y + 5);
+}
+
+window.onload = () => draw();
+</script>
+</body>
+</html>
