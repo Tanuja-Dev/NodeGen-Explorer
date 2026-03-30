@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>NodeKin | Manual DLS Explorer</title>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h2 style="margin:0">NodeGen Explorer - DLS</h2>
+    </div>
+
+    <div class="tabs">
+        <div id="tab1" class="tab active" onclick="setTab(1)">Manual Entry</div>
+        <div id="tab2" class="tab" onclick="setTab(2)">Description Data</div>
+    </div>
+
+    <div id="box1" class="input-box active">
+        <div class="row">
+            <div style="flex:2">
+                <label>Parent Name</label>
+                <input type="text" id="mParent" placeholder="e.g. Amitabh">
+            </div>
+            <div style="flex:2">
+                <label id="childLabel">Child Name</label>
+                <input type="text" id="mChild" placeholder="e.g. Abhishek">
+            </div>
+            <div style="flex:1; text-align:center">
+                <label>Is Root?</label><br>
+                <input type="checkbox" id="mRoot" onchange="toggleChild()" style="width:22px; height:22px; cursor:pointer">
+            </div>
+            <button onclick="addManual()" style="background:var(--success); color:white; flex: 1;">+ Add</button>
+        </div>
+    </div>
+
+    <div id="box2" class="input-box">
+        <label>Relationship List (Parent | Child)</label>
+        <textarea id="bulkData">
+Amitabh | Null
+Dharmendra | Null
+Amitabh | Abhishek
+Dharmendra | Sunny
+Abhishek | Aaradhya
+Sunny | Bobby</textarea>
+    </div>
+
+    <div class="common-panel">
+        <div class="row">
+            <div style="flex:1">
+                <label>Search Depth (L)</label>
+                <input type="number" id="depthLimit" value="3" min="0" oninput="clearSearchAndDraw()">
+            </div>
+            <div style="flex:2">
+                <label>DLS Finding</label>
+                <input type="text" id="targetName" placeholder="Enter target name..." oninput="clearSearchAndDraw()">
+            </div>
+            <div class="btn-group">
+                <button class="btn-gen" onclick="draw()">Generate Tree</button>
+                <button class="btn-find" onclick="runDLS()">DLS Find</button>
+                <button class="btn-clear" onclick="resetAll()">Clear All</button>
+            </div>
+        </div>
+        <div id="status">Status: Ready.</div>
+    </div>
+
+    <div id="canvas-wrap">
+        <canvas id="treeCanvas" width="940" height="520"></canvas>
+    </div>
+</div>
+
+</body>
+</html>
