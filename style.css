@@ -1,0 +1,60 @@
+/* Core Variables and Reset */
+:root { 
+    --primary: #4a90e2; 
+    --accent: #f1c40f; 
+    --success: #2ecc71; 
+    --danger: #e74c3c; 
+    --text: #2c3e50; 
+}
+
+body { 
+    font-family: 'Segoe UI', sans-serif; 
+    background: #eef2f7; 
+    padding: 20px; 
+    color: var(--text); 
+    margin: 0; 
+}
+
+/* Layout Containers */
+.container { 
+    max-width: 1000px; 
+    margin: auto; 
+    background: white; 
+    border-radius: 12px; 
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1); 
+    overflow: hidden; 
+}
+
+.header { 
+    background: var(--primary); 
+    color: white; 
+    padding: 20px; 
+    text-align: center; 
+}
+
+/* Tab System */
+.tabs { display: flex; background: #f1f1f1; border-bottom: 1px solid #ddd; }
+.tab { flex: 1; padding: 15px; text-align: center; font-weight: bold; cursor: pointer; }
+.tab.active { background: white; border-bottom: 3px solid var(--primary); color: var(--primary); }
+
+/* Form Elements */
+.input-box { padding: 25px; display: none; }
+.input-box.active { display: block; }
+.common-panel { background: #f9f9f9; padding: 20px 25px; border-top: 1px solid #eee; border-bottom: 4px solid var(--primary); }
+
+.row { display: flex; gap: 15px; align-items: flex-end; margin-bottom: 10px; }
+input, textarea { padding: 12px; border: 1px solid #ccc; border-radius: 6px; width: 100%; box-sizing: border-box; }
+textarea { height: 110px; font-family: 'Courier New', monospace; font-size: 13px; resize: none; }
+
+/* Buttons */
+.btn-group { display: flex; gap: 10px; flex: 3; }
+button { padding: 12px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+.btn-gen { background: var(--primary); color: white; flex: 1.5; }
+.btn-find { background: var(--accent); color: #333; flex: 1.5; }
+.btn-clear { background: var(--danger); color: white; flex: 1; }
+
+#status { font-weight: bold; margin-top: 12px; min-height: 20px; font-size: 15px; }
+
+/* Canvas Styling */
+#canvas-wrap { background: white; padding: 20px; overflow: auto; text-align: center; }
+canvas { border: 1px solid #eee; border-radius: 8px; background: #fff; }
