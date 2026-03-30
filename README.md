@@ -1,1 +1,1 @@
-# myfirstProj
+NodeGen Explorer is an interactive tool that visualizes how artificial intelligence searches hierarchical data like family trees in real time, making the process easy to understand.It converts simple parent–child relationships into a structured tree with nodes and edges, starting from a root called “Human Society,” representing the origin of all data.The system uses the Depth-Limited Search (DLS) algorithm to explore nodes within a fixed number of levels, and is built using HTML and JavaScript for visualization and logic.
